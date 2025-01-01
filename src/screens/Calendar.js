@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { View, StyleSheet, Dimensions, SafeAreaView } from 'react-native'
-import { PanGestureHandler } from 'react-native-gesture-handler'
+import { PanGestureHandler } from 'react-native-gesture-handler' 
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import MonthCalendar from './MonthCalendar'  // 월간 달력 컴포넌트
 import WeekCalendar from './WeekCalendar'   // 주간 달력 컴포넌트
+
 
 const Calendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date())  // 현재 날짜
@@ -30,9 +31,11 @@ const Calendar = () => {
     return (
         <GestureHandlerRootView style={styles.container}>
             <SafeAreaView style={styles.container}>
+
                 {/* 날짜를 위/아래로 스와이프할 영역 */}
                 <PanGestureHandler onGestureEvent={handleGestureEvent}>
                     <View style={styles.calendarArea}>
+                        
                         {viewMode === 'month' ? (
                             <MonthCalendar
                                 currentDate={currentDate}
@@ -48,6 +51,7 @@ const Calendar = () => {
                                 setSelectedDate={setSelectedDate}  // 상태 변경 함수 전달
                             />
                         )}
+
                     </View>
                 </PanGestureHandler>
             </SafeAreaView>

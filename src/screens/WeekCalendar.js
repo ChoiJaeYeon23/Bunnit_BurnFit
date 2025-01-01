@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity, Platform } from 'react-native'
+import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from 'react-native-vector-icons/Ionicons'
 import { useAtom } from 'jotai'
 import { currentDateAtom, selectedDateAtom } from '../store' // Zotai 상태 관리
+import { PanGestureHandler } from 'react-native-gesture-handler'
 
 const WeekCalendar = () => {
     const [currentDate, setCurrentDate] = useAtom(currentDateAtom)
     const [selectedDate, setSelectedDate] = useAtom(selectedDateAtom)
     const [daysInWeek, setDaysInWeek] = useState([])
+    const [swiping, setSwiping] = useState(false)  // 중복 스와이프 방지 상태
 
     // 해당 주의 날짜 배열 생성
     const generateWeek = () => {
@@ -36,15 +38,17 @@ const WeekCalendar = () => {
     }
 
     // 좌우 스와이프 처리
-    const handleSwipe = (direction) => {
-        const newDate = new Date(currentDate)
-        if (direction === 'left') {
-            newDate.setDate(currentDate.getDate() - 7) // 한 주 전으로 이동
-        } else if (direction === 'right') {
-            newDate.setDate(currentDate.getDate() + 7) // 한 주 후로 이동
+    const handleSwipe = (gesture) => {
+        const newDate = new Date(currentDate);
+        if (gesture.translationX < -100) {  // 왼쪽으로 스와이프
+            newDate.setDate(currentDate.getDate() + 7); // 다음 주로 이동
+        } else if (gesture.translationX > 100) {  // 오른쪽으로 스와이프
+            newDate.setDate(currentDate.getDate() - 7); // 이전 주로 이동
         }
-        setCurrentDate(newDate)
-    }
+        setCurrentDate(newDate);
+    };
+
+
 
     // 주 범위 표시 계산
     const getWeekTitle = () => {
@@ -61,11 +65,11 @@ const WeekCalendar = () => {
                 onPress={() => handleDayPress(item)}
             >
                 <Text
-                    style={[ 
-                        styles.dayText, 
-                        isSelected && styles.boldText, 
-                        item.getDay() === 0 && styles.sundayText, 
-                        item.getDay() === 6 && styles.saturdayText, 
+                    style={[
+                        styles.dayText,
+                        isSelected && styles.boldText,
+                        item.getDay() === 0 && styles.sundayText,
+                        item.getDay() === 6 && styles.saturdayText,
                     ]}
                 >
                     {item.getDate()}
@@ -107,29 +111,34 @@ const WeekCalendar = () => {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.monthNavigation}>
-                <TouchableOpacity onPress={() => handleSwipe('left')}>
+                <TouchableOpacity onPress={() => handleSwipe({ translationX: 50 })}>
                     <Icon name="chevron-back-sharp" size={30} color="#333" />
                 </TouchableOpacity>
 
                 <Text style={styles.monthText}>{getWeekTitle()}</Text>
 
-                <TouchableOpacity onPress={() => handleSwipe('right')}>
+                <TouchableOpacity onPress={() => handleSwipe({ translationX: -50 })}>
                     <Icon name="chevron-forward-sharp" size={30} color="#333" />
                 </TouchableOpacity>
             </View>
 
             {/* 주간 달력 영역 */}
-            <View style={styles.calendarContainer}>
-                {renderWeekHeader()}
+            <PanGestureHandler
+                onGestureEvent={(e) => handleSwipe(e.nativeEvent)}
+                activeOffsetX={[-10, 10]} // 좌우 스와이프만 허용
+            >
+                <View style={styles.calendarContainer}>
+                    {renderWeekHeader()}
 
-                <FlatList
-                    data={daysInWeek}
-                    renderItem={renderDay}
-                    keyExtractor={(item) => item.toISOString()}
-                    horizontal
-                    contentContainerStyle={styles.flatListContent}
-                />
-            </View>
+                    <FlatList
+                        data={daysInWeek}
+                        renderItem={renderDay}
+                        keyExtractor={(item) => item.toISOString()}
+                        horizontal
+                        contentContainerStyle={styles.flatListContent}
+                    />
+                </View>
+            </PanGestureHandler>
         </SafeAreaView>
     )
 }
@@ -178,7 +187,7 @@ const styles = StyleSheet.create({
         color: '#B0B0B0',
     },
     dayContainer: {
-        display:'flex',
+        display: 'flex',
         width: Dimensions.get('window').width / 7.5,
         height: Dimensions.get('window').width / 7.5, // width와 height를 같게 설정
         justifyContent: 'center', // 세로 가운데 정렬
