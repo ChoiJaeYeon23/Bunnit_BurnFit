@@ -1,5 +1,6 @@
 [BurnFit] Front-end 과제
 
-개발환경 react-native-community/cli - android
-
-상태관리 jotai
+### 개발 환경
+- React Native CLI: `react-native-community/cli`
+- 상태 관리: Jotai
+- 플랫폼: Android
