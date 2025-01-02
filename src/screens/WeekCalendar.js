@@ -1,16 +1,19 @@
+// 주간달력 컴포넌트
+
+
+
 import React, { useState, useEffect } from 'react'
 import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from 'react-native-vector-icons/Ionicons'
 import { useAtom } from 'jotai'
-import { currentDateAtom, selectedDateAtom } from '../store' // Zotai 상태 관리
+import { currentDateAtom, selectedDateAtom } from '../store'
 import { PanGestureHandler } from 'react-native-gesture-handler'
 
 const WeekCalendar = () => {
     const [currentDate, setCurrentDate] = useAtom(currentDateAtom)
     const [selectedDate, setSelectedDate] = useAtom(selectedDateAtom)
     const [daysInWeek, setDaysInWeek] = useState([])
-    const [swiping, setSwiping] = useState(false)  // 중복 스와이프 방지 상태
 
     // 해당 주의 날짜 배열 생성
     const generateWeek = () => {
@@ -32,21 +35,35 @@ const WeekCalendar = () => {
         generateWeek()
     }, [currentDate])
 
-    // 날짜 클릭 시 선택된 날짜 처리
+    // 날짜 클릭 시 해당날짜를 선택된 날짜로 처리
     const handleDayPress = (date) => {
         setSelectedDate(date)
     }
 
+    // 전 주로 넘어가는 버튼(벡터아이콘 쓴 버튼)
+    const handlePrevWeek = () => {
+        const newDate = new Date(currentDate)
+        newDate.setDate(currentDate.getDate() - 7)
+        setCurrentDate(newDate)
+    }
+
+    // 다음 주로 넘어가는 버튼(벡터아이콘 쓴 버튼)
+    const handleNextWeek = () => {
+        const newDate = new Date(currentDate)
+        newDate.setDate(currentDate.getDate() + 7)
+        setCurrentDate(newDate)
+    }
+
     // 좌우 스와이프 처리
     const handleSwipe = (gesture) => {
-        const newDate = new Date(currentDate);
+        const newDate = new Date(currentDate)
         if (gesture.translationX < -100) {  // 왼쪽으로 스와이프
-            newDate.setDate(currentDate.getDate() + 7); // 다음 주로 이동
+            newDate.setDate(currentDate.getDate() + 7) // 다음 주로 이동
         } else if (gesture.translationX > 100) {  // 오른쪽으로 스와이프
-            newDate.setDate(currentDate.getDate() - 7); // 이전 주로 이동
+            newDate.setDate(currentDate.getDate() - 7) // 이전 주로 이동
         }
-        setCurrentDate(newDate);
-    };
+        setCurrentDate(newDate)
+    }
 
 
 
@@ -57,7 +74,8 @@ const WeekCalendar = () => {
 
     // 날짜 렌더링
     const renderDay = ({ item }) => {
-        const isSelected = selectedDate && isSameDay(item, selectedDate)
+        const isToday = isSameDay(item, new Date())  // 오늘 날짜인지 확인
+        const isSelected = selectedDate && isSameDay(item, selectedDate)  // 선택된 날짜 확인
 
         return (
             <TouchableOpacity
@@ -67,9 +85,7 @@ const WeekCalendar = () => {
                 <Text
                     style={[
                         styles.dayText,
-                        isSelected && styles.boldText,
-                        item.getDay() === 0 && styles.sundayText,
-                        item.getDay() === 6 && styles.saturdayText,
+                        isToday && styles.boldText,  // 오늘 날짜는 bold 처리
                     ]}
                 >
                     {item.getDate()}
@@ -87,7 +103,7 @@ const WeekCalendar = () => {
         )
     }
 
-    // 요일 헤더 렌더링
+    // 요일 헤더(Sun, Mon, Tue ... 등등 ) 렌더링
     const renderWeekHeader = () => {
         const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
         return (
@@ -111,13 +127,13 @@ const WeekCalendar = () => {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.monthNavigation}>
-                <TouchableOpacity onPress={() => handleSwipe({ translationX: 50 })}>
+                <TouchableOpacity onPress={handlePrevWeek}>
                     <Icon name="chevron-back-sharp" size={30} color="#333" />
                 </TouchableOpacity>
 
                 <Text style={styles.monthText}>{getWeekTitle()}</Text>
 
-                <TouchableOpacity onPress={() => handleSwipe({ translationX: -50 })}>
+                <TouchableOpacity onPress={handleNextWeek}>
                     <Icon name="chevron-forward-sharp" size={30} color="#333" />
                 </TouchableOpacity>
             </View>
@@ -125,7 +141,7 @@ const WeekCalendar = () => {
             {/* 주간 달력 영역 */}
             <PanGestureHandler
                 onGestureEvent={(e) => handleSwipe(e.nativeEvent)}
-                activeOffsetX={[-10, 10]} // 좌우 스와이프만 허용
+                activeOffsetX={[-10, 10]} // 좌(-10),우(10)로 10픽셀 이내의 이동 감지함
             >
                 <View style={styles.calendarContainer}>
                     {renderWeekHeader()}
@@ -148,7 +164,6 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingTop: 20,
         paddingHorizontal: 10,
-        backgroundColor: '#fff',
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -159,10 +174,10 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     monthText: {
+        flex: 1,
         fontSize: 20,
         textAlign: 'center',
         marginBottom: 20,
-        flex: 1,
     },
     calendarContainer: {
         flex: 1,
@@ -172,7 +187,7 @@ const styles = StyleSheet.create({
     flatListContent: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'center', // 세로 가운데 정렬
+        justifyContent: 'center',
     },
     weekHeader: {
         flexDirection: 'row',
@@ -183,15 +198,14 @@ const styles = StyleSheet.create({
         width: Dimensions.get('window').width / 7.5,
         textAlign: 'center',
         fontSize: 14,
-        fontWeight: 'bold',
-        color: '#B0B0B0',
+        color: '#b2b2b2',
     },
     dayContainer: {
         display: 'flex',
         width: Dimensions.get('window').width / 7.5,
-        height: Dimensions.get('window').width / 7.5, // width와 height를 같게 설정
-        justifyContent: 'center', // 세로 가운데 정렬
-        alignItems: 'center', // 가로 가운데 정렬
+        height: Dimensions.get('window').width / 7.5, //width와 height를 같게 설정해야함. -> 정사각형 -> radius 줬을때 동그라미처럼 보임
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     dayText: {
         fontSize: 20,
@@ -199,9 +213,6 @@ const styles = StyleSheet.create({
     },
     boldText: {
         fontWeight: 'bold',
-    },
-    grayText: {
-        color: '#B0B0B0',
     },
     sundayText: {
         color: 'red',
@@ -211,8 +222,8 @@ const styles = StyleSheet.create({
     },
     selectedDayContainer: {
         borderWidth: 2,
-        borderColor: 'skyblue', // 동그라미 스타일
-        borderRadius: 100, // 동그라미 모양
+        borderColor: 'skyblue',
+        borderRadius: 100,
     },
 })
 
